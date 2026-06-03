@@ -1,0 +1,151 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+@keyframes fadein{
+    0% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    25%{
+        opacity: 25%;
+    }
+    50%{
+        opacity: 50%;
+    }
+    75%{
+        opacity: 75%;
+    }
+    100%{
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.login{
+    background: #a3e3a6;
+    background: linear-gradient(90deg, rgba(163, 227, 166, 1) 0%, rgba(255, 255, 255, 1) 46%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    animation: 1.5s fadein;
+    overflow: hidden;
+}
+
+.login-box{
+    background-color: white;
+    padding: 40px 20px;
+    width: 350px;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    border: 2px solid rgb(193, 187, 187);
+    flex-direction: column;
+    
+}
+
+.text-box{
+    width: 300px;
+    text-align: left;
+    margin-bottom: 25px;
+    padding: 2px;
+}
+
+.text-box h5{
+    font-size: 20px;
+}
+
+.text-box p {
+    font-size: 15px;
+    opacity: 50%;
+    margin-bottom: 5px;
+}
+
+.inputLogin-box{
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+    margin: 10px 0 10px 0;
+    gap: 10px;
+}
+
+.nik, .pass{
+    border: 2px solid black;
+    border-radius: 20px;    
+    width: 300px;
+    padding: 5px 7px;
+    outline: none;
+    transition: all 0.3 ease;
+}
+
+.nik:focus, .pass:focus{
+    border-color: #2A7B9B;
+    box-shadow: 0 0 8px rgba(42, 123, 155, 0.3);
+    transform: scale(1.02);
+}
+
+.check-forgot{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 100px;
+}
+
+.checkbox-box{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.checkbox-box input{
+    accent-color: #2A7B9B;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.checkbox-box input:active{
+    transform: scale(0.7);
+}
+
+
+.checkbox-box p{
+    font-size: 12px;
+}
+
+.check-forgot a{
+    font-size: 12px;
+}
+
+
+.login-button button{
+    background: #2A7B9B;
+    background: linear-gradient(90deg, rgba(42, 123, 155, 1) 0%, rgba(80, 188, 136, 1) 27%, rgba(141, 196, 171, 1) 66%, rgba(180, 214, 196, 1) 78%, rgba(223, 235, 227, 1) 100%);
+    background-size: 200% auto;
+    transition: all 0.4s ease;
+    margin-top: 30px;
+    border: none; 
+    cursor: pointer; 
+    font-weight: bold;
+    width: 300px;
+    padding: 10px;
+    border-radius: 20px;
+    color: white;
+    font-size: 16px;
+}
+
+.login-button button:hover{
+    background-position: right center;
+    box-shadow: 0 5px 15px rgba(42, 123, 155, 0.4);
+    transform: translateY(-2px);
+}
+
+.login-button button:active{
+    transform: translateY(1px);
+    box-shadow: 0 2px 5px rgba(42, 123, 155, 0.4);
+}
