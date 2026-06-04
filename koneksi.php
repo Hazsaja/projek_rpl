@@ -1,12 +1,3 @@
 <?php
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db   = "db_desa";
-
-$koneksi = mysqli_connect($host, $user, $pass, $db);
-
-if (!$koneksi) {
-    die("Koneksi database gagal: " . mysqli_connect_error());
-}
+require_once __DIR__ . '/config/koneksi.php';
 ?>

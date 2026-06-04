@@ -1,10 +1,10 @@
 <?php
-session_start();
-// fungsinya untuk menendang kembali ke laman login apabila belum login
-if (!isset($_SESSION['login']) || $_SESSION['status'] !== 'admin') {
-    header("Location: index.php");
-    exit;
-}
+require_once __DIR__ . '/config/session.php';
+require_once __DIR__ . '/templates/sidebar.php';
+require_once __DIR__ . '/templates/navbar.php';
+require_once __DIR__ . '/templates/footer.php';
+
+require_admin();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -15,45 +15,11 @@ if (!isset($_SESSION['login']) || $_SESSION['status'] !== 'admin') {
     <link rel="stylesheet" href="menu_style.css">
 </head>
 <body class="dashboard-body">
-
     <div class="main-container">
-
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo-box">
-                    <span class="logo-text">Jaya</span>
-                    <button class="menu-toggle-btn">○</button>
-                </div>
-            </div>
-
-            <ul class="nav-links">
-                <li class="nav-item active-gradient"> 
-                    <a href="admin.php" class="nav-link">
-                        <i class="icon-dashboard"></i> <span>Admin Control</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="logout.php" class="nav-link history-link">
-                        <i class="icon-history"></i>
-                        <span>Keluar</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        <?php render_sidebar('admin', 'admin'); ?>
 
         <div class="content-area">
-            <header class="top-header">
-                <div class="top-header-right">
-                    <div class="notifications">
-                        <i class="icon-bell"></i>
-                        <span class="notification-badge">3</span> </div>
-                    <div class="user-profile">
-                        <img src="https://via.placeholder.com/40" alt="Admin Profile" class="profile-img">
-                        <i class="icon-status-active"></i>
-                        <span style="margin-left: 10px; font-weight: 600; color: #333;">Admin</span>
-                    </div>
-                </div>
-            </header>
+            <?php render_navbar($_SESSION['nama'] ?? 'Admin', 3); ?>
 
             <main class="page-content">
                 <div class="content-header">
@@ -61,7 +27,6 @@ if (!isset($_SESSION['login']) || $_SESSION['status'] !== 'admin') {
                 </div>
 
                 <div class="document-grid">
-                    
                     <div class="doc-card">
                         <div class="card-header theme-gradient-full">
                             <div class="header-content">
@@ -123,11 +88,10 @@ if (!isset($_SESSION['login']) || $_SESSION['status'] !== 'admin') {
                             <button class="buat-surat-btn">Pengaturan</button>
                         </div>
                     </div>
-
-                </div> 
-            </main> 
-        </div> 
-    </div> 
-    <script src="script.js"></script>
+                </div>
+            </main>
+        </div>
+    </div>
+    <?php render_footer(); ?>
 </body>
 </html>

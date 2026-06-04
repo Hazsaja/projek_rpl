@@ -1,35 +1,93 @@
 <?php
 session_start();
-include 'koneksi.php';
+include 'config/koneksi.php';
 
-if (!isset($_SESSION['login'])) {
+// Cek apakah user sudah login
+if (!isset($_SESSION['login']) || !isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit;
 }
 
-if (!isset($_GET['id'])) {
+if (!isset($_GET['pengajuan_id'])) {
     echo "Data surat tidak ditemukan!";
     exit;
 }
 
-$id_surat = $_GET['id'];
-$user_id = $_SESSION['id'];
+$id_surat = mysqli_real_escape_string($koneksi, $_GET['pengajuan_id']);
+$user_id = $_SESSION['user_id'];
 
-
+// Query dinamis mengambil relasi data pemohon, jenis surat, dan template surat
+// Catatan: Menggunakan penamaan primary key yang baru (pengajuan_id, jenis_surat_id)
 if ($_SESSION['status'] == 'admin') {
-    $query = "SELECT * FROM pengajuan_surat WHERE id = '$id_surat' AND status_surat = 'disetujui'";
+    // Admin bisa cetak surat siapa saja yang sudah disetujui
+    $query = "
+        SELECT 
+            p.pengajuan_id, p.status, p.tanggal_verifikasi, p.nomor_pengajuan,
+            dp.nama, dp.nik, dp.tempat_lahir, dp.tanggal_lahir, dp.jenis_kelamin, 
+            dp.agama, dp.status_kawin, dp.pekerjaan, dp.kewarganegaraan, dp.alamat,
+            js.nama_surat, 
+            ts.isi_template 
+        FROM pengajuan p
+        JOIN data_pemohon dp ON p.pengajuan_id = dp.pengajuan_id
+        JOIN jenis_surat js ON p.jenis_surat_id = js.jenis_surat_id
+        JOIN template_surat ts ON js.jenis_surat_id = ts.jenis_surat_id
+        WHERE p.pengajuan_id = '$id_surat' AND p.status = 'disetujui'
+    ";
 } else {
-    $query = "SELECT * FROM pengajuan_surat WHERE id = '$id_surat' AND user_id = '$user_id' AND status_surat = 'disetujui'";
+    // User biasa hanya bisa cetak surat miliknya sendiri yang disetujui
+    $query = "
+        SELECT 
+            p.pengajuan_id, p.status, p.tanggal_verifikasi, p.nomor_pengajuan,
+            dp.nama, dp.nik, dp.tempat_lahir, dp.tanggal_lahir, dp.jenis_kelamin, 
+            dp.agama, dp.status_kawin, dp.pekerjaan, dp.kewarganegaraan, dp.alamat,
+            js.nama_surat, 
+            ts.isi_template 
+        FROM pengajuan p
+        JOIN data_pemohon dp ON p.pengajuan_id = dp.pengajuan_id
+        JOIN jenis_surat js ON p.jenis_surat_id = js.jenis_surat_id
+        JOIN template_surat ts ON js.jenis_surat_id = ts.jenis_surat_id
+        WHERE p.pengajuan_id = '$id_surat' AND p.user_id = '$user_id' AND p.status = 'disetujui'
+    ";
 }
 
 $result = mysqli_query($koneksi, $query);
 
 if (mysqli_num_rows($result) === 0) {
-    echo "Surat tidak tersedia atau belum disetujui.";
+    echo "<script>alert('Surat tidak tersedia, belum disetujui, atau Anda tidak memiliki akses.'); window.close();</script>";
     exit;
 }
 
 $data = mysqli_fetch_assoc($result);
+
+// =========================================================================
+// PROSES STRING REPLACEMENT (Menukar shortcode dengan data asli dari tabel)
+// =========================================================================
+$isi_surat = $data['isi_template'];
+
+// Penyesuaian variabel yang ada di database dengan data diri pemohon
+$isi_surat = str_replace('{{nama}}', '<strong>' . strtoupper($data['nama']) . '</strong>', $isi_surat);
+$isi_surat = str_replace('{{nik}}', $data['nik'], $isi_surat);
+$isi_surat = str_replace('{{tempat_lahir}}', $data['tempat_lahir'], $isi_surat);
+
+// Format ulang tanggal lahir ke format Indonesia (misal: 17 Agustus 1945)
+$bulan_indo = array(1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember');
+$tgl_lahir_pecah = explode('-', $data['tanggal_lahir']);
+$format_tgl_lahir = $tgl_lahir_pecah[2] . ' ' . $bulan_indo[(int)$tgl_lahir_pecah[1]] . ' ' . $tgl_lahir_pecah[0];
+
+$isi_surat = str_replace('{{tanggal_lahir}}', $format_tgl_lahir, $isi_surat);
+$isi_surat = str_replace('{{jenis_kelamin}}', $data['jenis_kelamin'], $isi_surat);
+$isi_surat = str_replace('{{agama}}', $data['agama'], $isi_surat);
+$isi_surat = str_replace('{{status_kawin}}', $data['status_kawin'], $isi_surat);
+$isi_surat = str_replace('{{pekerjaan}}', $data['pekerjaan'], $isi_surat);
+$isi_surat = str_replace('{{kewarganegaraan}}', $data['kewarganegaraan'], $isi_surat);
+$isi_surat = str_replace('{{alamat}}', $data['alamat'], $isi_surat);
+
+// Mengambil nomor pengajuan dari database atau membuat format default
+$nomor_surat = $data['nomor_pengajuan'] ? $data['nomor_pengajuan'] : "474.4 / " . $data['pengajuan_id'] . " / DS-HJ / " . date('Y');
+
+// Format tanggal verifikasi/approve
+$tgl_app_pecah = explode('-', date('Y-m-d', strtotime($data['tanggal_verifikasi'])));
+$format_tgl_approve = $tgl_app_pecah[2] . ' ' . $bulan_indo[(int)$tgl_app_pecah[1]] . ' ' . $tgl_app_pecah[0];
 ?>
 
 <!DOCTYPE html>
@@ -37,13 +95,12 @@ $data = mysqli_fetch_assoc($result);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cetak Surat - <?= $data['jenis_surat']; ?></title>
+    <title>Cetak Surat - <?= htmlspecialchars($data['nama_surat']); ?></title>
     <style>
-       
         body {
             font-family: "Times New Roman", Times, serif;
             color: #000;
-            background-color: #fff;
+            background-color: #f0f0f0; /* Beri warna abu agar kertas putih lebih terlihat di layar */
             margin: 0;
             padding: 0;
         }
@@ -54,6 +111,7 @@ $data = mysqli_fetch_assoc($result);
             margin: 10mm auto;
             background: white;
             box-sizing: border-box;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .kop-surat {
             text-align: center;
@@ -61,7 +119,7 @@ $data = mysqli_fetch_assoc($result);
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
-        .kop-surat h1, .kop-surat h2, .kop-surat h3, .kop-surat p {
+        .kop-surat h1, .kop-surat h2, .kop-surat p {
             margin: 2px 0;
         }
         .judul-surat {
@@ -71,11 +129,14 @@ $data = mysqli_fetch_assoc($result);
         .judul-surat h3 {
             text-decoration: underline;
             margin-bottom: 5px;
+            text-transform: uppercase;
         }
         .isi-surat {
             text-align: justify;
             line-height: 1.5;
+            font-size: 12pt;
         }
+        /* Style untuk tabel jika di dalam template nanti ada butuh style biodata */
         .tabel-biodata {
             margin: 20px 0 20px 30px;
         }
@@ -105,7 +166,9 @@ $data = mysqli_fetch_assoc($result);
         }
     </style>
 </head>
-<body onload="window.print()"> <div class="kertas-surat">
+<body onload="window.print()"> 
+    
+    <div class="kertas-surat">
         <div class="kop-surat">
             <h2>PEMERINTAH KABUPATEN HAZEL</h2>
             <h2>KECAMATAN JAYA</h2>
@@ -114,38 +177,17 @@ $data = mysqli_fetch_assoc($result);
         </div>
 
         <div class="judul-surat">
-            <h3>SURAT KETERANGAN DOMISILI</h3>
-            <p>Nomor: 474.4 / <?= $data['id']; ?> / DS-HJ / <?= date('Y'); ?></p>
+            <h3><?= htmlspecialchars($data['nama_surat']); ?></h3>
+            <p>Nomor: <?= $nomor_surat; ?></p>
         </div>
 
         <div class="isi-surat">
-            <p>Yang bertanda tangan di bawah ini, Kepala Desa Hazeljaya, Kecamatan Jaya, Kabupaten Hazel, menerangkan dengan sebenarnya bahwa:</p>
-            
-            <table class="tabel-biodata">
-                <tr>
-                    <td>Nama Lengkap</td>
-                    <td>:</td>
-                    <td><strong><?= $data['nama_pengaju']; ?></strong></td>
-                </tr>
-                <tr>
-                    <td>NIK</td>
-                    <td>:</td>
-                    <td><?= $data['nik_pengaju']; ?></td>
-                </tr>
-                <tr>
-                    <td>Alamat Rumah</td>
-                    <td>:</td>
-                    <td><?= $data['alamat_rumah']; ?></td>
-                </tr>
-            </table>
-
-            <p>Orang tersebut di atas adalah benar-benar warga yang berdomisili dan bertempat tinggal di alamat tersebut, di wilayah Desa Hazeljaya.</p>
-            <p>Demikian surat keterangan domisili ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.</p>
+            <?= $isi_surat; ?>
         </div>
 
         <div class="ttd-container">
             <div class="ttd-box">
-                <p>Hazeljaya, <?= date('d F Y', strtotime($data['tanggal_approve'])); ?></p>
+                <p>Hazeljaya, <?= $format_tgl_approve; ?></p>
                 <p>Kepala Desa Hazeljaya</p>
                 <div class="nama-kades">Bapak Kepala Desa</div>
             </div>

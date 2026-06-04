@@ -1,30 +1,46 @@
 <?php
-session_start();
-include 'koneksi.php';
+require_once __DIR__ . '/config/koneksi.php';
+require_once __DIR__ . '/config/session.php';
+require_once __DIR__ . '/templates/sidebar.php';
+require_once __DIR__ . '/templates/navbar.php';
+require_once __DIR__ . '/templates/footer.php';
 
+require_admin();
 
-if (!isset($_SESSION['login']) || $_SESSION['status'] !== 'admin') {
-    header("Location: index.php");
-    exit;
-}
-
+// 1. Logika Update Status Surat
 if (isset($_POST['aksi'])) {
-    $id = $_POST['id_surat'];
-    $status = $_POST['aksi']; 
-    $keterangan = mysqli_real_escape_string($koneksi, $_POST['keterangan']);
+    $id = mysqli_real_escape_string($koneksi, $_POST['id_surat']);
+    $status = mysqli_real_escape_string($koneksi, $_POST['aksi']); // 'disetujui' atau 'ditolak'
+    $catatan_admin = mysqli_real_escape_string($koneksi, $_POST['catatan_admin']);
     $tanggal_sekarang = date('Y-m-d H:i:s');
 
-    $query_update = "UPDATE pengajuan_surat SET 
-                     status_surat = '$status', 
-                     keterangan_ditolak = '$keterangan', 
-                     tanggal_approve = '$tanggal_sekarang' 
-                     WHERE id = '$id'";
-    
+    // Penyesuaian nama kolom sesuai db_desa.sql (status, catatan_admin, tanggal_verifikasi)
+    // Perhatikan WHERE pengajuan_id = '$id'
+    $query_update = "UPDATE pengajuan SET
+                     status = '$status',
+                     catatan_admin = '$catatan_admin',
+                     tanggal_verifikasi = '$tanggal_sekarang'
+                     WHERE pengajuan_id = '$id'";
+
     mysqli_query($koneksi, $query_update);
     echo "<script>alert('Status surat berhasil diperbarui!'); window.location='admin_surat_masuk.php';</script>";
 }
 
-$query = "SELECT * FROM pengajuan_surat ORDER BY tanggal_pengajuan DESC";
+// 2. Query untuk mengambil data pengajuan beserta nama surat dan data pemohon
+$query = "
+    SELECT 
+        p.pengajuan_id, 
+        p.tanggal_pengajuan, 
+        p.tanggal_verifikasi, 
+        p.status, 
+        js.nama_surat, 
+        dp.nama AS nama_pengaju, 
+        dp.nik AS nik_pengaju 
+    FROM pengajuan p
+    JOIN jenis_surat js ON p.jenis_surat_id = js.jenis_surat_id
+    JOIN data_pemohon dp ON p.pengajuan_id = dp.pengajuan_id
+    ORDER BY p.tanggal_pengajuan DESC
+";
 $result = mysqli_query($koneksi, $query);
 ?>
 
@@ -35,152 +51,116 @@ $result = mysqli_query($koneksi, $query);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Daftar Surat Masuk</title>
     <link rel="stylesheet" href="menu_style.css">
+    <style>
+        /* Tambahan style agar dokumen terlihat rapi */
+        .doc-link {
+            display: block;
+            font-size: 11px;
+            color: #007bff;
+            text-decoration: none;
+            margin-bottom: 3px;
+        }
+        .doc-link:hover { text-decoration: underline; }
+    </style>
 </head>
 <body class="dashboard-body">
     <div class="main-container">
-       <nav class="sidebar">
-            <div class="sidebar-header">
-               <div class="logo-box">
-                    <span class="logo-text">Jaya</span>
-                    <button class="menu-toggle-btn">○</button>
-                </div>
-            </div>
-            <ul class="nav-links">
-                <li class="nav-item"> 
-                    <a href="admin.php" class="nav-link">
-                        <i class="icon-create-document"></i>
-                        <span>Admin Control</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="logout.php" class="nav-link history-link">
-                        <i class="icon-history"></i>
-                        <span>Keluar</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        <?php render_sidebar('admin', 'admin'); ?>
 
         <div class="content-area">
-            <header class="top-header">
-                <div class="top-header-right">
-                    <div class="notifications">Halo, <?= $_SESSION['nama'] ?? 'admin'; ?>!
-                        <i class="icon-bell"></i>
-                        <span class="notification-badge">1</span>
-                    </div>
-                    <div class="user-profile">
-                        <img src="https://via.placeholder.com/40" alt="User Profile" class="profile-img">
-                        <i class="icon-status-active"></i>
-                    </div>
-                </div>
-            </header>
+            <?php render_navbar($_SESSION['nama'] ?? 'Admin'); ?>
 
             <main class="page-content">
                 <div class="content-header">
                     <p class="breadcrumb">Home / <a href="admin.php" style="color: #888; text-decoration: none;">Admin Control</a> / Surat Masuk</p>
                 </div>
 
-                <div class="info-alert">
-                    <div class="info-header">
-                        <strong>Informasi!</strong>
-                        <button class="close-btn">&times;</button>
-                    </div>
-                    <ul class="info-list">
-                        <li>Tombol Download muncul ketika surat telah disetujui oleh Admin, harap untuk menunggu.</li>
-                        <li>Disarankan ukuran layar 90%.</li>
-                    </ul>
-                </div>
-
                 <div class="table-card">
                     <div class="table-header-row">
-                        <h2 class="table-title">
-                            <a href="menu.php" style="text-decoration: none;">
-                                <span class="back-arrow">&larr;</span>
-                            </a> 
-                            Riwayat Surat Yang Masuk
-                        </h2>
-                    </div>
-
-                    <div class="table-controls">
-                        <div class="show-entries">
-                            Show 
-                            <select>
-                                <option>10</option>
-                                <option>25</option>
-                                <option>50</option>
-                            </select> 
-                            entries
-                        </div>
-                        <div class="search-box">
-                            Search: <input type="text">
-                        </div>
+                        <h2 class="table-title">Riwayat Surat Yang Masuk</h2>
                     </div>
 
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>NO <span>&uarr;&darr;</span></th>
-                                    <th>NAMA PENGAJU <span>&uarr;&darr;</span></th>
-                                    <th>NIK <span>&uarr;&darr;</span></th>
-                                    <th>JENIS SURAT <span>&uarr;&darr;</span></th>
-                                    <th>STATUS <span>&uarr;&darr;</span></th>
-                                    <th>DOKUMEN <span>&uarr;&darr;</span></th>
-                                    <th>TANGGAL APPROVE <span>&uarr;&darr;</span></th>
-                                    <th>SELISIH <span>&uarr;&darr;</span></th>
-                                    <th>AKSI <span>&uarr;&darr;</span></th>
+                                    <th>NO</th>
+                                    <th>NIK</th>
+                                    <th>NAMA PENGAJU</th>
+                                    <th>JENIS SURAT</th>
+                                    <th>DOKUMEN LAMPIRAN</th>
+                                    <th>TANGGAL PENGAJUAN</th>
+                                    <th>STATUS</th>
+                                    <th>AKSI (VERIFIKASI)</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php 
+                                <?php
                                 $no = 1;
-                                while($row = mysqli_fetch_assoc($result)): 
-                                    // Hitung selisih hari dari tanggal pengajuan ke hari ini
-                                    $tgl_awal = new DateTime($row['tanggal_pengajuan']);
-                                    $tgl_akhir = new DateTime();
-                                    $diff = $tgl_awal->diff($tgl_akhir);
+                                if (mysqli_num_rows($result) > 0):
+                                    while ($row = mysqli_fetch_assoc($result)):
                                 ?>
                                 <tr>
                                     <td><?= $no++; ?></td>
-                                    <td><?= $row['nama_pengaju']; ?></td>
+                                    <!-- Sebelumnya terbalik, sekarang NIK dan NAMA sudah disesuaikan -->
                                     <td><?= $row['nik_pengaju']; ?></td>
-                                    <td><?= $row['jenis_surat']; ?></td>
-                                    <td><span class="badge-<?= $row['status_surat']; ?>"><?= ucfirst($row['status_surat']); ?></span></td>
+                                    <td><?= $row['nama_pengaju']; ?></td>
+                                    <td><?= $row['nama_surat']; ?></td>
+                                    
                                     <td>
-                                        <a href="uploads/<?= $row['file_ktp_kk']; ?>" target="_blank">KTP</a> | 
-                                        <a href="uploads/<?= $row['file_pas_foto']; ?>" target="_blank">Foto</a>
+                                        <?php
+                                        // 3. Query tambahan untuk mengambil daftar dokumen berdasarkan ID pengajuan
+                                        $pengajuan_id = $row['pengajuan_id'];
+                                        $q_dokumen = mysqli_query($koneksi, "
+                                            SELECT doc.path_file, req.nama_persyaratan 
+                                            FROM dokumen_pengajuan doc 
+                                            JOIN persyaratan_surat req ON doc.persyaratan_id = req.persyaratan_surat_id 
+                                            WHERE doc.pengajuan_id = '$pengajuan_id'
+                                        ");
+                                                                                
+                                        if (mysqli_num_rows($q_dokumen) > 0) {
+                                            while ($dok = mysqli_fetch_assoc($q_dokumen)) {
+                                                echo '<a href="'.$dok['path_file'].'" target="_blank" class="doc-link">📄 '.$dok['nama_persyaratan'].'</a>';
+                                            }
+                                        } else {
+                                            echo '-';
+                                        }
+                                        ?>
                                     </td>
-                                    <td><?= $row['tanggal_approve'] ?? '-'; ?></td>
-                                    <td><?= $diff->d; ?> Hari</td>
+                                    
+                                    <td><?= date('d/m/Y H:i', strtotime($row['tanggal_pengajuan'])); ?></td>
+                                    
+                                    <td><span class="badge-<?= $row['status']; ?>"><?= ucfirst($row['status']); ?></span></td>
+                                    
                                     <td>
-                                        <?php if($row['status_surat'] == 'pending'): ?>
-                                        <form method="POST" style="display:inline;">
-                                            <input type="hidden" name="id_surat" value="<?= $row['id']; ?>">
-                                            <input type="text" name="keterangan" placeholder="Catatan (jika ditolak)">
-                                            <button type="submit" name="aksi" value="disetujui" class="btn-approve">Terima</button>
-                                            <button type="submit" name="aksi" value="ditolak" class="btn-reject">Tolak</button>
+                                        <!-- Cek enum status db_desa: 'menunggu', 'disetujui', 'ditolak' -->
+                                        <?php if ($row['status'] == 'menunggu'): ?>
+                                        <form method="POST" style="display:inline; margin-top: 5px;">
+                                            <input type="hidden" name="id_surat" value="<?= $row['pengajuan_id']; ?>">
+                                            <!-- Catatan wajib diisi jika ditolak, bisa pakai JS validation tambahan -->
+                                            <input type="text" name="catatan_admin" placeholder="Catatan (wajib jika ditolak)" style="padding: 5px; width: 130px; font-size: 11px; margin-bottom: 5px;">
+                                            <br>
+                                            <button type="submit" name="aksi" value="disetujui" class="btn-approve" style="background-color: #28a745; color: white; border: none; padding: 5px 10px; cursor: pointer;">Terima</button>
+                                            <button type="submit" name="aksi" value="ditolak" class="btn-reject" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer;">Tolak</button>
                                         </form>
                                         <?php else: ?>
-                                            Selesai
+                                            <i>Telah diverifikasi<br>pada <?= date('d/m/y', strtotime($row['tanggal_verifikasi'])); ?></i>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
-                                <?php endwhile; ?>
+                                <?php 
+                                    endwhile; 
+                                else:
+                                ?>
+                                <tr><td colspan="8" style="text-align:center;">Belum ada surat masuk.</td></tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
-
-                    <div class="table-footer">
-                        <div class="showing-info">Showing 0 to 0 of 0 entries</div>
-                        <div class="pagination">
-                            <button class="page-btn disabled">Previous</button>
-                            <button class="page-btn disabled">Next</button>
-                        </div>
-                    </div>
                 </div>
-            </main> 
-        </div> 
+            </main>
+        </div>
     </div>
-    <script src="script.js"></script>
+    <?php render_footer(); ?>
 </body>
 </html>

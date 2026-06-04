@@ -1,39 +1,48 @@
 <?php
-session_start();
-include 'koneksi.php';
+require_once __DIR__ . '/config/koneksi.php';
+require_once __DIR__ . '/config/session.php';
 
-
-if (!isset($_SESSION['login']) || $_SESSION['status'] !== 'admin') {
-    header("Location: index.php");
-    exit;
-}
-
+require_admin();
 
 if (isset($_POST['register'])) {
-    $nama     = mysqli_real_escape_string($koneksi, $_POST['nama']);
-    $nik      = mysqli_real_escape_string($koneksi, $_POST['nik']);
-    $email    = mysqli_real_escape_string($koneksi, $_POST['email']);
-    $password = mysqli_real_escape_string($koneksi, $_POST['password']);
-    $status   = mysqli_real_escape_string($koneksi, $_POST['status']);
+    $nama     = trim($_POST['nama'] ?? '');
+    $nik      = trim($_POST['nik'] ?? '');
+    $email    = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $status   = $_POST['status'] ?? '';
 
-   
-    $password_hashed = password_hash($password, PASSWORD_DEFAULT);
-
-    $cek_query = "SELECT * FROM users WHERE email='$email' OR nik='$nik'";
-    $cek_result = mysqli_query($koneksi, $cek_query);
-
-    if (mysqli_num_rows($cek_result) > 0) {
-        $error = "Gagal! Email atau NIK sudah terdaftar.";
+    if ($nama === '' || $nik === '' || $email === '' || $password === '' || $status === '') {
+        $error = "Semua kolom wajib diisi.";
+    } elseif (!preg_match('/^[0-9]{16}$/', $nik)) {
+        $error = "NIK harus terdiri dari 16 digit angka.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Format email tidak valid.";
+    } elseif (!in_array($status, ['admin', 'user'], true)) {
+        $error = "Role pengguna tidak valid.";
     } else {
-        
-        $query = "INSERT INTO users (nama, nik, email, password, status) 
-                  VALUES ('$nama', '$nik', '$email', '$password_hashed', '$status')";
-        
-        if (mysqli_query($koneksi, $query)) {
-            $success = "Pengguna berhasil didaftarkan!";
+        $password_hashed = password_hash($password, PASSWORD_DEFAULT);
+
+        $cek_stmt = mysqli_prepare($koneksi, "SELECT id FROM users WHERE email = ? OR nik = ? LIMIT 1");
+        mysqli_stmt_bind_param($cek_stmt, "ss", $email, $nik);
+        mysqli_stmt_execute($cek_stmt);
+        $cek_result = mysqli_stmt_get_result($cek_stmt);
+
+        if (mysqli_num_rows($cek_result) > 0) {
+            $error = "Gagal! Email atau NIK sudah terdaftar.";
         } else {
-            $error = "Error: " . mysqli_error($koneksi);
+            $insert_stmt = mysqli_prepare($koneksi, "INSERT INTO users (nama, nik, email, password, status) VALUES (?, ?, ?, ?, ?)");
+            mysqli_stmt_bind_param($insert_stmt, "sssss", $nama, $nik, $email, $password_hashed, $status);
+
+            if (mysqli_stmt_execute($insert_stmt)) {
+                $success = "Pengguna berhasil didaftarkan!";
+            } else {
+                $error = "Registrasi gagal. Silakan coba lagi.";
+            }
+
+            mysqli_stmt_close($insert_stmt);
         }
+
+        mysqli_stmt_close($cek_stmt);
     }
 }
 ?>
@@ -53,10 +62,10 @@ if (isset($_POST['register'])) {
             <p>Hanya Admin yang dapat mendaftarkan akun baru.</p>
             
             <?php if(isset($error)): ?>
-                <p style="color: red; font-size: 12px; text-align: center; margin-top: 5px;"><?= $error; ?></p>
+                <p style="color: red; font-size: 12px; text-align: center; margin-top: 5px;"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
             <?php endif; ?>
             <?php if(isset($success)): ?>
-                <p style="color: green; font-size: 12px; text-align: center; margin-top: 5px;"><?= $success; ?></p>
+                <p style="color: green; font-size: 12px; text-align: center; margin-top: 5px;"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></p>
             <?php endif; ?>
         </div>
 

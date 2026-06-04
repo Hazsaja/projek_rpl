@@ -1,9 +1,14 @@
 <?php
-session_start();
-if (!isset($_SESSION['login'])) {
-    header("Location: index.php");
-    exit;
-}
+require_once __DIR__ . '/config/koneksi.php'; // Tambahkan koneksi database
+require_once __DIR__ . '/config/session.php';
+require_once __DIR__ . '/templates/sidebar.php';
+require_once __DIR__ . '/templates/navbar.php';
+require_once __DIR__ . '/templates/footer.php';
+
+require_login();
+
+// Mengambil daftar jenis surat yang berstatus aktif dari database
+$q_jenis_surat = mysqli_query($koneksi, "SELECT jenis_surat_id, nama_surat, deskripsi FROM jenis_surat WHERE aktif = 1");
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -14,52 +19,11 @@ if (!isset($_SESSION['login'])) {
     <link rel="stylesheet" href="menu_style.css">
 </head>
 <body class="dashboard-body">
-
     <div class="main-container">
-
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo-box">
-                    <img src="asset/logo_web.png" alt="" class="icon-logo">
-                    <button class="menu-toggle-btn">○</button>
-                </div>
-            </div>
-
-            <ul class="nav-links">
-                <li class="nav-item active-gradient"> 
-                    <a href="menu.php" class="nav-link">
-                        <img src="asset/home_page.png" alt="" class="icon-home">
-                        <span>Pembuatan Surat</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="menu_riwayat.php" class="nav-link history-link">
-                        <i class="icon-history"></i>
-                        <span>Riwayat Surat</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="logout.php" class="nav-link history-link">
-                        <img src="asset/icon_logout.png" alt="" class="icon-history">
-                        <span>Keluar</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        <?php render_sidebar('pembuatan', $_SESSION['status'] ?? 'user', 'HazelJaya'); ?>
 
         <div class="content-area">
-            <header class="top-header">
-                <div class="top-header-right">
-                    <div class="notifications">Halo, <?= $_SESSION['nama'] ?? 'Warga'; ?>!
-                        <i class="icon-bell"></i>
-                        <span class="notification-badge">1</span>
-                    </div>
-                    <div class="user-profile">
-                        <img src="asset/akun.png" alt="User Profile" class="profile-img">
-                        <i class="icon-status-active"></i>
-                    </div>
-                </div>
-            </header>
+            <?php render_navbar($_SESSION['nama'] ?? 'Warga'); ?>
 
             <main class="page-content">
                 <div class="content-header">
@@ -67,57 +31,38 @@ if (!isset($_SESSION['login'])) {
                 </div>
 
                 <div class="document-grid">
+                    <?php 
+                    // Array untuk memutar warna/tema CSS card agar tidak membosankan
+                    $themes = ['theme-gradient-full', 'theme-green', 'theme-blue-green', 'theme-cream', 'theme-purple', 'theme-orange'];
+                    $theme_index = 0;
+
+                    // Looping otomatis untuk membuat card surat sesuai database
+                    while ($surat = mysqli_fetch_assoc($q_jenis_surat)) { 
+                        // Menentukan warna tema
+                        $current_theme = $themes[$theme_index % count($themes)];
+                        $theme_index++;
+                    ?>
+                    
                     <div class="doc-card">
-                        <div class="card-header theme-gradient-full">
+                        <div class="card-header <?= $current_theme; ?>">
                             <div class="header-content">
-                                <h2 class="card-title">Surat keterangan Domisili</h2>
+                                <h2 class="card-title"><?= htmlspecialchars($surat['nama_surat']); ?></h2>
                             </div>
                         </div>
                         <div class="card-body">
-                            <p class="card-description">dokumen resmi dari kelurahan/desa yang menerangkan alamat tempat tinggal seseorang atau badan usaha, sering digunakan untuk keperluan administrasi</p>
-                            <a href="surat.php"><button class="buat-surat-btn">Buat Surat</button></a>
+                            <p class="card-description"><?= htmlspecialchars($surat['deskripsi']); ?></p>
+                            
+                            <a href="form_pengajuan.php?jenis_surat_id=<?= $surat['jenis_surat_id']; ?>" style="text-decoration: none;">
+                                <button class="buat-surat-btn">Buat Surat</button>
+                            </a>
                         </div>
                     </div>
 
-                    <div class="doc-card">
-                        <div class="card-header theme-green">
-                            <div class="header-content">
-                                <h2 class="card-title">Surat Keterangan Tidak Mampu (SKTM)</h2>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <p class="card-description">dokumen resmi dari desa/kelurahan yang menyatakan seseorang kurang mampu secara finansial. Ini digunakan untuk keringanan biaya sekolah, pengobatan, atau bantuan sosial..</p>
-                            <button class="buat-surat-btn">Buat Surat</button>
-                        </div>
-                    </div>
-
-                    <div class="doc-card">
-                        <div class="card-header theme-blue-green">
-                            <div class="header-content">
-                                <h2 class="card-title">Surat Keterangan Ahli Waris</h2>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <p class="card-description">dokumen resmi yang menyatakan siapa saja yang berhak atas harta peninggalan seseorang yang sudah meninggal dunia.</p>
-                            <button class="buat-surat-btn">Buat Surat</button>
-                        </div>
-                    </div>
-
-                    <div class="doc-card">
-                        <div class="card-header theme-cream">
-                            <div class="header-content">
-                                <h2 class="card-title">Surat Pernyataan Belum Menikah</h2>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <p class="card-description">dokumen resmi yang menegaskan bahwa seseorang berstatus lajang atau belum pernah menikah secara resmi maupun agama. Surat ini diterbitkan oleh Kelurahan/Kecamatan (SKBM).</p>
-                            <button class="buat-surat-btn">Buat Surat</button>
-                        </div>
-                    </div>
-                </div> 
-            </main> 
-        </div> 
-    </div> 
-    <script src="script.js"></script>
+                    <?php } ?>
+                </div>
+            </main>
+        </div>
+    </div>
+    <?php render_footer(); ?>
 </body>
 </html>
