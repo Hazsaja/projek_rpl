@@ -102,19 +102,6 @@ Sistem dapat digunakan untuk berbagai jenis layanan administrasi desa, seperti:
 
 ---
 
-## Tim Pengembang
-
-* Razan Nabil Annadif
-* Hanna Fadillah Septiana
-* Arcya Apricia Purnomo
-* Muhammad Fikri Maulana
-* Mustikasari Yahya
-
-Program Studi Informatika
-Universitas Singaperbangsa Karawang
-
----
-
 ## Lisensi
 
 Proyek ini dibuat untuk keperluan akademik dan pembelajaran.
