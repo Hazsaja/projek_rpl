@@ -1,23 +1,17 @@
 <?php
-session_start();
-include 'koneksi.php';
+require_once __DIR__ . '/config/koneksi.php';
+require_once __DIR__ . '/config/session.php';
 
-
-if (isset($_SESSION['login'])) {
-    if ($_SESSION['status'] == 'admin') {
-        header("Location: admin.php");
-    } else {
-        header("Location: menu.php");
-    }
-    exit;
-}
+redirect_authenticated_user();
 
 if (isset($_POST['masuk'])) {
-    $email = mysqli_real_escape_string($koneksi, $_POST['email']);
-    $password = mysqli_real_escape_string($koneksi, $_POST['password']);
+    $email = trim($_POST['nik'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-    $query = "SELECT * FROM users WHERE email='$email'";
-    $result = mysqli_query($koneksi, $query);
+    $stmt = mysqli_prepare($koneksi, "SELECT user_id, nama, nik, email, password, status FROM users WHERE nik = ? LIMIT 1");
+    mysqli_stmt_bind_param($stmt, "s", $email);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
 
     if (mysqli_num_rows($result) === 1) {
         $data = mysqli_fetch_assoc($result);
@@ -26,7 +20,7 @@ if (isset($_POST['masuk'])) {
         if (password_verify($password, $data['password'])) {
             // Set Session
             $_SESSION['login']  = true;
-            $_SESSION['id']     = $data['id'];
+            $_SESSION['user_id']     = $data['user_id'];
             $_SESSION['nama']   = $data['nama'];
             $_SESSION['status'] = $data['status'];
             $_SESSION['nik'] = $data['nik'];
@@ -44,6 +38,8 @@ if (isset($_POST['masuk'])) {
     } else {
         $error = "Email tidak ditemukan!";
     }
+
+    mysqli_stmt_close($stmt);
 }
 ?>
 
@@ -62,13 +58,13 @@ if (isset($_POST['masuk'])) {
             <p>Harap Masukan Email anda yang telah terdaftar</p>
             
             <?php if(isset($error)): ?>
-                <p style="color: red; font-size: 12px; text-align: center;"><?= $error; ?></p>
+                <p style="color: red; font-size: 12px; text-align: center;"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
             <?php endif; ?>
         </div>
 
         <form action="" method="POST">
             <div class="inputLogin-box">
-                <input type="text" name="email" class="nik" placeholder="E-mail" required>
+                <input type="number" name="nik" class="nik" placeholder="NIK" required>
                 <input type="password" name="password" class="pass" placeholder="Kata Sandi" required>
             </div>
             <div class="check-forgot">

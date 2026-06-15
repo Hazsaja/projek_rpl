@@ -1,16 +1,31 @@
 <?php
-session_start();
-include 'koneksi.php';
+require_once __DIR__ . '/config/koneksi.php';
+require_once __DIR__ . '/config/session.php';
+require_once __DIR__ . '/templates/sidebar.php';
+require_once __DIR__ . '/templates/navbar.php';
+require_once __DIR__ . '/templates/footer.php';
 
-// Proteksi Halaman User
-if (!isset($_SESSION['login'])) {
-    header("Location: index.php");
-    exit;
-}
+require_login();
 
-$user_id = $_SESSION['id'];
-    
-$query = "SELECT * FROM pengajuan_surat WHERE user_id = '$user_id' ORDER BY tanggal_pengajuan DESC";
+// Menggunakan session 'id' atau 'user_id' tergantung pengaturan login Anda
+$user_id = $_SESSION['user_id'] ?? $_SESSION['id'];
+
+// Menggunakan JOIN untuk mengambil data relasi dari jenis_surat dan data_pemohon
+$query = "
+    SELECT 
+        p.pengajuan_id, 
+        p.tanggal_pengajuan, 
+        p.status, 
+        p.catatan_admin, 
+        p.tanggal_verifikasi, 
+        js.nama_surat, 
+        dp.nik 
+    FROM pengajuan p
+    JOIN jenis_surat js ON p.jenis_surat_id = js.jenis_surat_id
+    JOIN data_pemohon dp ON p.pengajuan_id = dp.pengajuan_id
+    WHERE p.user_id = '$user_id' 
+    ORDER BY p.tanggal_pengajuan DESC
+";
 $result = mysqli_query($koneksi, $query);
 ?>
 
@@ -24,48 +39,10 @@ $result = mysqli_query($koneksi, $query);
 </head>
 <body class="dashboard-body">
     <div class="main-container">
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo-box">
-                    <span class="logo-text">Jaya</span>
-                    <button class="menu-toggle-btn">○</button>
-                </div>
-            </div>
-            <ul class="nav-links">
-                <li class="nav-item"> 
-                    <a href="menu.php" class="nav-link">
-                        <i class="icon-create-document"></i>
-                        <span>Pembuatan Surat</span>
-                    </a>
-                </li>
-                <li class="nav-item active-gradient">
-                    <a href="menu_riwayat.php" class="nav-link history-link">
-                        <i class="icon-history"></i>
-                        <span>Riwayat Surat</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="logout.php" class="nav-link history-link">
-                        <i class="icon-history"></i>
-                        <span>Keluar</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        <?php render_sidebar('riwayat', $_SESSION['status'] ?? 'user'); ?>
 
-       <div class="content-area">
-            <header class="top-header">
-                <div class="top-header-right">
-                    <div class="notifications">Halo, <?= $_SESSION['nama'] ?? 'warga'; ?>!
-                        <i class="icon-bell"></i>
-                        <span class="notification-badge">1</span>
-                    </div>
-                    <div class="user-profile">
-                        <img src="https://via.placeholder.com/40" alt="User Profile" class="profile-img">
-                        <i class="icon-status-active"></i>
-                    </div>
-                </div>
-            </header>
+        <div class="content-area">
+            <?php render_navbar($_SESSION['nama'] ?? 'Warga'); ?>
 
             <main class="page-content">
                 <div class="content-header">
@@ -88,19 +65,19 @@ $result = mysqli_query($koneksi, $query);
                         <h2 class="table-title">
                             <a href="menu.php" style="text-decoration: none;">
                                 <span class="back-arrow">&larr;</span>
-                            </a> 
+                            </a>
                             Riwayat Surat Yang Diajukan
                         </h2>
                     </div>
 
                     <div class="table-controls">
                         <div class="show-entries">
-                            Show 
+                            Show
                             <select>
                                 <option>10</option>
                                 <option>25</option>
                                 <option>50</option>
-                            </select> 
+                            </select>
                             entries
                         </div>
                         <div class="search-box">
@@ -123,32 +100,44 @@ $result = mysqli_query($koneksi, $query);
                                 </tr>
                             </thead>
                             <tbody>
-                               <?php 
+                               <?php
                                 $no = 1;
-                                if(mysqli_num_rows($result) > 0):
-                                    while($row = mysqli_fetch_assoc($result)): 
+                                if (mysqli_num_rows($result) > 0):
+                                    while ($row = mysqli_fetch_assoc($result)):
                                 ?>
                                 <tr>
                                     <td><?= $no++; ?></td>
-                                    <td><?=  date('d/m/Y', strtotime($row['tanggal_pengajuan'])); ?></td>
-                                    <td><?= $row['jenis_surat']; ?></td>
-                                    <td><span class="badge-<?= $row['status_surat']; ?>"><?= ucfirst($row['status_surat']); ?></span></td>
-                                    <td><?= $_SESSION['nik']; ?></td>
-                                    <td><?= $row['keterangan_ditolak'] ?? '-'; ?></td>
-                                    <td><?= $row['tanggal_approve'] ? date('d/m/Y', strtotime($row['tanggal_approve'])) : '-'; ?></td>
+                                    <td><?= date('d/m/Y', strtotime($row['tanggal_pengajuan'])); ?></td>
+                                    
+                                    <!-- Diubah menggunakan field nama_surat dari tabel jenis_surat -->
+                                    <td><?= $row['nama_surat']; ?></td>
+                                    
+                                    <!-- Diubah menggunakan field status dari tabel pengajuan -->
+                                    <td><span class="badge-<?= $row['status']; ?>"><?= ucfirst($row['status']); ?></span></td>
+                                    
+                                    <!-- Diubah menggunakan NIK dari tabel data_pemohon agar lebih akurat jika mengajukan untuk keluarga -->
+                                    <td><?= $row['nik']; ?></td>
+                                    
+                                    <!-- Diubah menggunakan field catatan_admin -->
+                                    <td><?= $row['catatan_admin'] ? $row['catatan_admin'] : '-'; ?></td>
+                                    
+                                    <!-- Diubah menggunakan field tanggal_verifikasi -->
+                                    <td><?= $row['tanggal_verifikasi'] ? date('d/m/Y', strtotime($row['tanggal_verifikasi'])) : '-'; ?></td>
+                                    
                                     <td>
-                                        <?php if($row['status_surat'] == 'disetujui'): ?>
-                                            <a href="cetak_surat.php?id=<?= $row['id']; ?>" target="_blank" class="btn-action btn-print" style="text-decoration:none; display:inline-block;">Cetak</a>
+                                        <!-- Penyesuaian pengecekan status menjadi 'disetujui' sesuai enum di database -->
+                                        <?php if ($row['status'] == 'disetujui'): ?>
+                                            <a href="cetak_surat.php?pengajuan_id=<?= $row['pengajuan_id']; ?>" target="_blank" class="btn-action btn-print" style="text-decoration:none; display:inline-block;">Cetak</a>
                                         <?php else: ?>
                                             -
                                         <?php endif; ?>
                                     </td>
                                 </tr>
-                                <?php 
-                                    endwhile; 
+                                <?php
+                                    endwhile;
                                 else:
                                 ?>
-                                <tr><td colspan="7" style="text-align:center;">Belum ada pengajuan surat.</td></tr>
+                                <tr><td colspan="8" style="text-align:center;">Belum ada pengajuan surat.</td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
@@ -162,9 +151,9 @@ $result = mysqli_query($koneksi, $query);
                         </div>
                     </div>
                 </div>
-            </main> 
-        </div> 
-    </div> 
-    <script src="script.js"></script>
+            </main>
+        </div>
+    </div>
+    <?php render_footer(); ?>
 </body>
 </html>
