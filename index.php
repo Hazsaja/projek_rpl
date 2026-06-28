@@ -36,7 +36,7 @@ if (isset($_POST['masuk'])) {
             $error = "Password yang Anda masukkan salah!";
         }
     } else {
-        $error = "Email tidak ditemukan!";
+        $error = "NIK tidak ditemukan!";
     }
 
     mysqli_stmt_close($stmt);
@@ -51,11 +51,11 @@ if (isset($_POST['masuk'])) {
     <title>Login Page</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="login">
+<body class="login login-background">
     <div class="login-box">
         <div class="text-box">
             <h5>Selamat Datang</h5>
-            <p>Harap Masukan Email anda yang telah terdaftar</p>
+            <p>Harap Masukan NIK anda yang telah terdaftar</p>
             
             <?php if(isset($error)): ?>
                 <p style="color: red; font-size: 12px; text-align: center;"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>

@@ -1,12 +1,11 @@
 <?php
-session_start();
-include 'config/koneksi.php';
+require_once __DIR__ . '/config/koneksi.php';
+require_once __DIR__ . '/config/session.php';
+require_once __DIR__ . '/templates/sidebar.php';
+require_once __DIR__ . '/templates/navbar.php';
+require_once __DIR__ . '/templates/footer.php';
 
-// Cek apakah user sudah login
-if (!isset($_SESSION['login']) || !isset($_SESSION['user_id'])) {
-    header("Location: index.php");
-    exit;
-}
+require_login();
 
 // Tangkap ID jenis surat dari URL
 if (!isset($_GET['jenis_surat_id'])) {
@@ -38,7 +37,9 @@ if (isset($_POST['kirim_surat'])) {
     $alamat          = mysqli_real_escape_string($koneksi, $_POST['alamat_rumah']);
 
     $target_dir = "uploads/";
-    if (!is_dir($target_dir)) { mkdir($target_dir, 0777, true); }
+    if (!is_dir($target_dir)) {
+        mkdir($target_dir, 0777, true);
+    }
 
     // Mulai Transaksi
     mysqli_begin_transaction($koneksi);
@@ -60,11 +61,11 @@ if (isset($_POST['kirim_surat'])) {
             if (strpos($input_name, 'syarat_') === 0 && $file['error'] == 0) {
                 // Ekstrak ID persyaratan dari name form
                 $persyaratan_id = str_replace('syarat_', '', $input_name);
-                
+
                 $nama_file_asli = basename($file["name"]);
                 $nama_file_unik = time() . "_" . $nama_file_asli;
                 $target_file = $target_dir . $nama_file_unik;
-                
+
                 if (move_uploaded_file($file["tmp_name"], $target_file)) {
                     mysqli_query($koneksi, "INSERT INTO dokumen_pengajuan (pengajuan_id, persyaratan_id, nama_file, path_file) 
                                             VALUES ('$pengajuan_id', '$persyaratan_id', '$nama_file_asli', '$target_file')");
@@ -76,85 +77,45 @@ if (isset($_POST['kirim_surat'])) {
 
         // Commit jika sukses semua
         mysqli_commit($koneksi);
-        echo "<script>alert('". $data_surat['nama_surat'] ." berhasil diajukan!'); window.location='menu_riwayat.php';</script>";
-
+        $_SESSION['success_pengajuan'] = true;
+        header('location: menu.php');
+        exit;
     } catch (Exception $e) {
         mysqli_rollback($koneksi);
-        $pesan_error = $e->getMessage();
-        echo "<script>alert('Gagal! $pesan_error');</script>";
+        $error = $e->getMessage();
     }
 }
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Form <?= $data_surat['nama_surat']; ?></title>
     <link rel="stylesheet" href="menu_style.css">
 </head>
+
 <body class="dashboard-body">
-
     <div class="main-container">
-
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo-box">
-                    <span class="logo-text">HazelJaya</span>
-                    <button class="menu-toggle-btn">○</button>
-                </div>
-            </div>
-
-            <ul class="nav-links">
-                <li class="nav-item active-gradient"> 
-                    <a href="menu.php" class="nav-link">
-                        <i class="icon-create-document"></i>
-                        <span>Pembuatan Surat</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="menu_riwayat.php" class="nav-link history-link">
-                        <i class="icon-history"></i>
-                        <span>Riwayat Surat</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="logout.php" class="nav-link history-link">
-                        <i class="icon-history"></i>
-                        <span>Keluar</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
+        <?php render_sidebar('pembuatan', $_SESSION['status'] ?? 'user'); ?>
         <div class="content-area">
-            <header class="top-header">
-                <div class="top-header-right">
-                   <div class="notifications">Halo, <?= $_SESSION['nama'] ?? 'Warga'; ?>!
-                        <i class="icon-bell"></i>
-                        <span class="notification-badge">1</span>
-                    </div>
-                    <div class="user-profile">
-                        <img src="https://via.placeholder.com/40" alt="User Profile" class="profile-img">
-                        <i class="icon-status-active"></i>
-                    </div>
-                </div>
-            </header>
+            <?php render_navbar($_SESSION['nama'] ?? 'Warga'); ?>
 
             <main class="page-content">
                 <div class="content-header">
                     <p class="breadcrumb">
-                        <a href="menu.php" style="color: #888; text-decoration: none;">Home</a> / 
-                        <a href="menu.php" style="color: #888; text-decoration: none;">Pembuatan Surat</a> / 
+                        <a href="menu.php" style="color: #888; text-decoration: none;">Home</a> /
+                        <a href="menu.php" style="color: #888; text-decoration: none;">Pembuatan Surat</a> /
                         <strong style="color: #333;">Form <?= $data_surat['nama_surat']; ?></strong>
                     </p>
                 </div>
 
                 <div class="form-card">
                     <h2 class="form-title">Form <?= $data_surat['nama_surat']; ?></h2>
-                    
-                    <form action="" method="post" enctype="multipart/form-data">
-                        
+
+                    <form id="formPengajuan" action="" method="post" enctype="multipart/form-data">
+
                         <div class="form-group">
                             <label>NIK Pemohon</label>
                             <div class="input-wrapper">
@@ -198,7 +159,7 @@ if (isset($_POST['kirim_surat'])) {
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Agama</label>
                             <div class="input-wrapper">
@@ -261,8 +222,8 @@ if (isset($_POST['kirim_surat'])) {
 
                         <?php
                         $q_syarat = mysqli_query($koneksi, "SELECT persyaratan_surat_id, nama_persyaratan FROM persyaratan_surat WHERE jenis_surat_id = '$jenis_surat_id'");
-                        
-                        while($syarat = mysqli_fetch_assoc($q_syarat)) {
+
+                        while ($syarat = mysqli_fetch_assoc($q_syarat)) {
                             $input_name = "syarat_" . $syarat['persyaratan_surat_id'];
                         ?>
                             <div class="form-group">
@@ -273,12 +234,66 @@ if (isset($_POST['kirim_surat'])) {
                             </div>
                         <?php } ?>
 
-                        <button type="submit" name="kirim_surat" class="send-btn">Ajukan Surat</button>
+                        <input type="hidden" name="kirim_surat" value="1">
+                        <button type="button" id="btnAjukan" class="send-btn">Ajukan Surat</button>
                     </form>
                 </div>
-            </main> 
-        </div> 
-    </div> 
+            </main>
+        </div>
+    </div>
+    <div id="confirmModal" class="custom-modal-overlay" style="display: none;">
+        <div class="custom-modal-box animate-pop">
+            <div class="modal-icon confirm">❓</div>
+            <h3>Konfirmasi Pengajuan</h3>
+            <p>Apakah Anda yakin data yang diisi sudah benar dan ingin mengajukan surat ini?</p>
+            <div class="modal-btn-group">
+                <button type="button" id="confirmNo" class="modal-btn btn-secondary">Batal</button>
+                <button type="button" id="confirmYes" class="modal-btn btn-primary">Ya, Kirim</button>
+            </div>
+        </div>
+    </div>
+    <?php if (isset($error) && !empty($error)): ?>
+        <div id="errorModal" class="custom-modal-overlay">
+            <div class="custom-modal-box animate-pop">
+                <div class="modal-icon error">❌</div>
+                <h3>Pengajuan Gagal!</h3>
+                <p><?= htmlspecialchars($error); ?></p>
+                <p style="font-size: 0.85em; color: #888; margin-top:-15px;">Silakan periksa kembali data Anda atau coba beberapa saat lagi.</p>
+                <button id="closeErrorModal" class="modal-btn btn-danger" style="width: 100%;">Tutup</button>
+            </div>
+        </div>
+
+        <script>
+            // Logika untuk menutup modal error
+            document.getElementById('closeErrorModal').addEventListener('click', function() {
+                document.getElementById('errorModal').style.display = 'none';
+            });
+        </script>
+    <?php endif; ?>
     <script src="script.js"></script>
+    <script>
+        const form = document.getElementById('formPengajuan');
+        const btnAjukan = document.getElementById('btnAjukan');
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmYes = document.getElementById('confirmYes');
+        const confirmNo = document.getElementById('confirmNo');
+
+        btnAjukan.addEventListener('click', function() {
+            if (form.checkValidity()) {
+                confirmModal.style.display = 'flex';
+            } else {
+                form.reportValidity();
+            }
+        });
+
+        confirmNo.addEventListener('click', function() {
+            confirmModal.style.display = 'none';
+        });
+
+        confirmYes.addEventListener('click', function() {
+            form.submit();
+        });
+    </script>
 </body>
+
 </html>

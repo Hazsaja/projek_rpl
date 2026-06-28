@@ -10,14 +10,23 @@
     --color-cool-blue: #2A7B9B;
     --color-mid-green: #50BC88;
     --color-warm-green: #8DC4AB;
-    
+
     --primary-gradient: linear-gradient(90deg, rgba(42, 123, 155, 1) 0%, rgba(80, 188, 136, 1) 27%, rgba(141, 196, 171, 1) 66%, rgba(180, 214, 196, 1) 78%, rgba(223, 235, 227, 1) 100%);
-    
+
     --sidebar-width: 280px;
     --top-header-height: 70px;
     --content-bg: #f5f5f5;
     --card-bg: #ffffff;
     --sidebar-bg: #ffffff;
+}
+
+.banner-background{
+    background-image: url('./asset/banner_page.jpg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    background-attachment: fixed;
+    
 }
 
 body.dashboard-body {
@@ -40,33 +49,30 @@ body.dashboard-body {
     height: 100%;
     z-index: 100;
     transition: width 0.3s ease;
-    overflow-x: hidden; 
+    overflow-x: hidden;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .sidebar.collapsed {
     width: 70px;
 }
 
-.sidebar.collapsed:hover {
-    width: var(--sidebar-width);
-    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-}
-
 .logo-text, .nav-link span, .menu-toggle-btn {
     transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
-.sidebar.collapsed:not(:hover) .logo-text,
-.sidebar.collapsed:not(:hover) .nav-link span {
+.sidebar.collapsed .logo-text,
+.sidebar.collapsed .nav-link span {
     opacity: 0;
     visibility: hidden;
 }
 
-.sidebar.collapsed:not(:hover) .logo-box {
+.sidebar.collapsed .logo-box {
     justify-content: center;
 }
-.sidebar.collapsed:not(:hover) .menu-toggle-btn {
+
+.sidebar.collapsed .menu-toggle-btn {
     opacity: 1;
     visibility: visible;
 }
@@ -84,8 +90,41 @@ body.dashboard-body {
 .logo-box {
     display: flex;
     align-items: center;
+    justify-content: center;
+    height: 100%;
     width: 100%;
-    justify-content: space-between;
+    padding: 0 10px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.sidebar-logo {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 45px;
+    max-height: 45px;
+    object-fit: contain;
+    transition: max-widht 0.3s ease, max-height 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-logo {
+    max-width: 40px !important;
+    max-height: 40px !important;
+}
+
+.brand-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2A7B9B;
+    margin-left: 10px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.sidebar.collapsed .brand-text {
+    display: none !important;
 }
 
 .logo-text {
@@ -145,16 +184,12 @@ body.dashboard-body {
     opacity: 1;
 }
 
-.icon-logo{
-    width: 200px;
-    height: 200px;
-}
-
 .content-area {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-width: 0;
 }
 
 .top-header {
@@ -164,7 +199,7 @@ body.dashboard-body {
     border-bottom: 1px solid #e0e0e0;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 0 30px;
     z-index: 90;
 }
@@ -175,21 +210,9 @@ body.dashboard-body {
     gap: 20px;
 }
 
-.notifications {
-    position: relative;
-    cursor: pointer;
-}
-
-.notification-badge {
-    position: absolute;
-    top: -5px;
-    right: -8px;
-    background-color: red;
-    color: white;
-    font-size: 10px;
-    font-weight: bold;
-    padding: 2px 5px;
-    border-radius: 50%;
+.top-header-left {
+    display: flex;
+    align-items: center;
 }
 
 .user-profile {
@@ -204,7 +227,7 @@ body.dashboard-body {
     height: 40px;
     border-radius: 50%;
     border: 2px solid white;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .icon-status-active {
@@ -222,6 +245,8 @@ body.dashboard-body {
     flex-grow: 1;
     padding: 30px;
     overflow-y: auto;
+    align-items: flex-start;
+    transition: all 0.3s ease;
 }
 
 .content-header {
@@ -243,7 +268,7 @@ body.dashboard-body {
 .doc-card {
     background-color: var(--card-bg);
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -252,7 +277,7 @@ body.dashboard-body {
 
 .doc-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
@@ -293,7 +318,7 @@ body.dashboard-body {
 }
 
 .buat-surat-btn {
-    background-color: #888; 
+    background-color: #888;
     border: none;
     color: white;
     font-weight: bold;
@@ -358,7 +383,7 @@ body.dashboard-body {
 .table-card {
     background-color: var(--card-bg);
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     padding: 25px;
 }
 
@@ -395,7 +420,7 @@ body.dashboard-body {
     color: #666;
 }
 
-.table-controls select, 
+.table-controls select,
 .table-controls input {
     padding: 6px 10px;
     border: 1px solid #ddd;
@@ -419,7 +444,7 @@ body.dashboard-body {
     min-width: 1000px;
 }
 
-.data-table th, 
+.data-table th,
 .data-table td {
     padding: 12px 15px;
     text-align: left;
@@ -488,9 +513,16 @@ body.dashboard-body {
 .form-card {
     background-color: var(--card-bg);
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    margin: 30px auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     padding: 30px;
     max-width: 900px;
+    transition: all 0.3s ease;
+}
+
+.sidebar.collapsed+.content-area .form-card {
+    margin: 30px auto;
+    align-items: center;
 }
 
 .form-title {
@@ -506,11 +538,193 @@ body.dashboard-body {
     margin-bottom: 20px;
 }
 
+.step-section {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+.form-group input[type="file"], .form-group textarea {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
 .form-group label {
     display: block;
     font-size: 14px;
     color: #666;
     margin-bottom: 8px;
+}
+
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Gelap transparan */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    /* Memastikan berada di paling depan */
+}
+
+/* Kotak Modal */
+.custom-modal-box {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    width: 380px;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Animasi Pop-up */
+.animate-pop {
+    animation: modalPop 0.3s ease-out forwards;
+}
+
+@keyframes modalPop {
+    0% {
+        transform: scale(0.7);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Icon Di Dalam Modal */
+.modal-icon {
+    font-size: 45px;
+    margin-bottom: 15px;
+    display: inline-block;
+}
+
+.modal-icon.success {
+    color: #50BC88;
+    /* Menggunakan palet hijau Anda */
+}
+
+.modal-icon.confirm {
+    color: #2A7B9B;
+    /* Menggunakan palet biru Anda */
+}
+
+/* Tipografi Modal */
+.custom-modal-box h3 {
+    margin-bottom: 10px;
+    font-size: 1.4em;
+    color: #333333;
+    font-weight: 600;
+}
+
+.custom-modal-box p {
+    font-size: 0.95em;
+    color: #666666;
+    line-height: 1.5;
+    margin-bottom: 25px;
+}
+
+/* Grup Tombol */
+.modal-btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+/* Tombol Dasar */
+.modal-btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.modal-btn:active {
+    transform: scale(0.97);
+}
+
+.modal-icon.error {
+    color: #dc3545;
+}
+
+.btn-download {
+    display: inline-block;
+    background-color: #17a2b8;
+    color: white;
+    padding: 8px 12px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.btn-download:hover {
+    background-color: #138496;
+}
+
+/* Tombol Warna Bahaya/Error (Merah) */
+.btn-danger {
+    background-color: #dc3545;
+    color: #ffffff;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* Tombol Warna Utama (Biru) */
+.btn-primary {
+    background-color: #2A7B9B;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background-color: #205e77;
+}
+
+/* Tombol Warna Sekunder (Batal/Abu-abu) */
+.btn-secondary {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.btn-secondary:hover {
+    background-color: #dee2e6;
 }
 
 .input-wrapper {
@@ -539,7 +753,7 @@ body.dashboard-body {
     outline: none;
     transition: border-color 0.3s;
     background-color: #fff;
-    appearance: none; 
+    appearance: none;
 }
 
 .input-wrapper select {
@@ -606,6 +820,7 @@ body.dashboard-body {
 
 .btn-action {
     padding: 6px 10px;
+    background-color: grey;
     border: none;
     border-radius: 4px;
     font-size: 12px;
@@ -614,20 +829,76 @@ body.dashboard-body {
     color: white;
     transition: background-color 0.2s;
 }
+.btn-action:hover{
+    background-color: #212529;
+}
 
-.btn-detail { background-color: #17a2b8; } 
-.btn-detail:hover { background-color: #138496; }
+.btn-edit {
+    background-color: #ffc107;
+    color: #212529;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 5px;
+    transition: background-color 0.2s;
+}
 
-.btn-approve { background-color: #28a745; }
-.btn-approve:hover { background-color: #218838; }
+.btn-edit:hover {
+    background-color: #e0a800;
+}
 
-.btn-reject { background-color: #dc3545; } 
-.btn-reject:hover { background-color: #c82333; }
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
 
-.btn-print { background-color: #6c757d; }
-.btn-print:hover { background-color: #5a6268; }
+.btn-delete:hover {
+    background-color: #c82333;
+}
 
-.badge-pending {
+.btn-detail {
+    background-color: #17a2b8;
+}
+
+.btn-detail:hover {
+    background-color: #138496;
+}
+
+.btn-approve {
+    background-color: #28a745;
+}
+
+.btn-approve:hover {
+    background-color: #218838;
+}
+
+.btn-reject {
+    background-color: #dc3545;
+}
+
+.btn-reject:hover {
+    background-color: #c82333;
+}
+
+.btn-print {
+    background-color: #6c757d;
+}
+
+.btn-print:hover {
+    background-color: #5a6268;
+}
+
+.badge-menunggu {
     background-color: #ffc107;
     color: #212529;
     padding: 3px 8px;
@@ -636,8 +907,36 @@ body.dashboard-body {
     font-weight: bold;
 }
 
-.badge-rejected {
+.badge-ditolak {
     background-color: #dc3545;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.badge-disetujui {
+    background-color: #3bdc35;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+
+}
+
+.badge-admin {
+    background-color: #35aadc;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.badge-user {
+    background-color: #35dca7;
     color: white;
     padding: 3px 8px;
     border-radius: 12px;
@@ -663,4 +962,16 @@ body.dashboard-body {
 
 .theme-cream {
     background-color: var(--color-warm-green);
+}
+
+.doc-link {
+    display: block;
+    font-size: 11px;
+    color: #007bff;
+    text-decoration: none;
+    margin-bottom: 3px;
+}
+
+.doc-link:hover {
+    text-decoration: underline;
 }

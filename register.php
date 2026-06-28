@@ -22,7 +22,7 @@ if (isset($_POST['register'])) {
     } else {
         $password_hashed = password_hash($password, PASSWORD_DEFAULT);
 
-        $cek_stmt = mysqli_prepare($koneksi, "SELECT id FROM users WHERE email = ? OR nik = ? LIMIT 1");
+        $cek_stmt = mysqli_prepare($koneksi, "SELECT user_id FROM users WHERE email = ? OR nik = ? LIMIT 1");
         mysqli_stmt_bind_param($cek_stmt, "ss", $email, $nik);
         mysqli_stmt_execute($cek_stmt);
         $cek_result = mysqli_stmt_get_result($cek_stmt);
@@ -34,7 +34,7 @@ if (isset($_POST['register'])) {
             mysqli_stmt_bind_param($insert_stmt, "sssss", $nama, $nik, $email, $password_hashed, $status);
 
             if (mysqli_stmt_execute($insert_stmt)) {
-                $success = "Pengguna berhasil didaftarkan!";
+                $success = true;
             } else {
                 $error = "Registrasi gagal. Silakan coba lagi.";
             }
@@ -54,19 +54,14 @@ if (isset($_POST['register'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrasi Pengguna - Admin</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="menu_style.css">
 </head>
-<body class="login">
+<body class="login login-background">
     <div class="login-box" style="height: auto; padding-bottom: 40px; margin-top: 20px; margin-bottom: 20px;">
         <div class="text-box">
             <h5>Registrasi Pengguna</h5>
             <p>Hanya Admin yang dapat mendaftarkan akun baru.</p>
             
-            <?php if(isset($error)): ?>
-                <p style="color: red; font-size: 12px; text-align: center; margin-top: 5px;"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
-            <?php endif; ?>
-            <?php if(isset($success)): ?>
-                <p style="color: green; font-size: 12px; text-align: center; margin-top: 5px;"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></p>
-            <?php endif; ?>
         </div>
 
         <form action="" method="POST">
@@ -92,5 +87,39 @@ if (isset($_POST['register'])) {
             </div>
         </form>
     </div>
+    <?php if (isset($success)): ?>
+        <div id="successModal" class="custom-modal-overlay">
+            <div class="custom-modal-box animate-pop">
+                <div class="modal-icon success">✓</div>
+                <h3>Pendaftaran Berhasil!</h3>
+                <p>Pengguna berhasil didaftarkan!.</p>
+                <button id="closeSuccessModal" class="modal-btn btn-primary" style="width: 100%;">Selesai</button>
+            </div>
+        </div>
+        <?php unset($success);?>
+        <script>
+            document.getElementById('closeSuccessModal').addEventListener('click', function() {
+                document.getElementById('successModal').style.display = 'none';
+            });
+        </script>
+    <?php endif; ?>
+    <?php if (isset($error)): ?>
+        <div id="errorModal" class="custom-modal-overlay">
+            <div class="custom-modal-box animate-pop">
+                <div class="modal-icon error">❌</div>
+                <h3>Pendaftaran Gagal!</h3>
+                <p><?= htmlspecialchars($error); ?></p>
+                <p style="font-size: 0.85em; color: #888; margin-top:-15px;">Silakan periksa kembali data Anda atau coba beberapa saat lagi.</p>
+                <button id="closeErrorModal" class="modal-btn btn-danger" style="width: 100%;">Tutup</button>
+            </div>
+        </div>
+
+        <script>
+            // Logika untuk menutup modal error
+            document.getElementById('closeErrorModal').addEventListener('click', function() {
+                document.getElementById('errorModal').style.display = 'none';
+            });
+        </script>
+    <?php endif; ?>
 </body>
 </html>

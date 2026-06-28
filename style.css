@@ -26,14 +26,21 @@
     }
 }
 
+
+.login-background{
+    background-image: url('./asset/background_login.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    background-attachment: fixed;
+    
+}
+
 .login{
-    background: #a3e3a6;
-    background: linear-gradient(90deg, rgba(163, 227, 166, 1) 0%, rgba(255, 255, 255, 1) 46%);
     display: flex;
     align-items: center;
     justify-content: center;
     height: 100vh;
-    animation: 1.5s fadein;
     overflow: hidden;
 }
 
@@ -46,7 +53,7 @@
     align-items: center;
     border: 2px solid rgb(193, 187, 187);
     flex-direction: column;
-    
+    animation: 1.5s fadein;
 }
 
 .text-box{
