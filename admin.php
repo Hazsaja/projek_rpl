@@ -28,7 +28,7 @@ require_admin();
 
                 <div class="document-grid">
                     <div class="doc-card">
-                        <div class="card-header theme-gradient-full">
+                        <div class="card-header banner-background">
                             <div class="header-content">
                                 <h2 class="card-title">Antrean Surat Masuk</h2>
                             </div>
@@ -40,31 +40,31 @@ require_admin();
                     </div>
 
                     <div class="doc-card">
-                        <div class="card-header theme-green">
+                        <div class="card-header banner-background">
                             <div class="header-content">
                                 <h2 class="card-title">Manajemen Data Warga</h2>
                             </div>
                         </div>
                         <div class="card-body">
                             <p class="card-description">Kelola informasi akun pengguna, verifikasi NIK, serta pembaruan data warga yang terdaftar pada sistem.</p>
-                            <button class="buat-surat-btn">Lihat Data</button>
+                            <button class="buat-surat-btn" onclick="window.location.href='data_warga.php'">Lihat Data</button>
                         </div>
                     </div>
 
                     <div class="doc-card">
-                        <div class="card-header theme-blue-green">
+                        <div class="card-header banner-background">
                             <div class="header-content">
                                 <h2 class="card-title">Arsip Surat Disetujui</h2>
                             </div>
                         </div>
                         <div class="card-body">
                             <p class="card-description">Akses riwayat seluruh surat yang telah selesai diproses, disetujui, dan dicetak dalam satu periode waktu.</p>
-                            <button class="buat-surat-btn">Buka Arsip</button>
+                            <button class="buat-surat-btn" onclick="window.location.href='arsip_surat_disetujui.php'">Buka Arsip</button>
                         </div>
                     </div>
 
                     <div class="doc-card">
-                        <div class="card-header theme-blue-green" style="background: linear-gradient(90deg, #2A7B9B 0%, #50BC88 100%);">
+                        <div class="card-header banner-background">
                             <div class="header-content">
                                 <h2 class="card-title">Registrasi Akun Baru</h2>
                             </div>
@@ -78,7 +78,7 @@ require_admin();
                     </div>
 
                     <div class="doc-card">
-                        <div class="card-header theme-cream">
+                        <div class="card-header banner-background">
                             <div class="header-content">
                                 <h2 class="card-title">Pengaturan Sistem</h2>
                             </div>
